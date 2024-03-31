@@ -1,6 +1,7 @@
 require('dotenv').config()
 const express = require('express')
 const mongoose = require('mongoose')
+const cors = require('cors')
 const {log} = require('./utility/AppUtils')
 const authRoutes = require('./routes/AuthRoutes')
 
@@ -10,6 +11,9 @@ const authRoutes = require('./routes/AuthRoutes')
 const port = 8080;
 const app = express();
 app.use(express.json());
+app.use(cors({
+    origin: ['http://localhost:5173']
+}))
 
 /**
  * DATABASE CONFIG
