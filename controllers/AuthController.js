@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const Users = require('../models/UserModel');
 const { log } = require('../utility/AppUtils');
 
@@ -57,4 +58,29 @@ const signupUser = async (req, res) => {
     res.end('signup done by om')
 }
 
-module.exports = {signupUser}
+const loginUser = async(req, res) => {
+    const {username, password} = req.body
+
+    try {
+        const userDoc = await Users.findOne({username: username})
+        if (!userDoc) {
+            res.status(400).json({error: "Invalid username"})
+            return;
+        }
+        const isValidPassword = bcrypt.compareSync(password, userDoc.password);
+        if (!isValidPassword) {
+            res.status(400).json({error: "Invalid username or password"})
+            return;
+        }
+        const token = jwt.sign({ id: userDoc.id}, process.env.JWT_SECRET);
+        res
+            .cookie('token', token, {httpOnly: true, sameSite: 'none', secure: true})
+            .status(200)
+            .json({message: "login successful", token: token})
+    } catch (e) {
+
+    }
+    res.end()
+}
+
+module.exports = {signupUser, loginUser}
