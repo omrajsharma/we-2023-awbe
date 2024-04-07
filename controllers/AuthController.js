@@ -72,15 +72,50 @@ const loginUser = async(req, res) => {
             res.status(400).json({error: "Invalid username or password"})
             return;
         }
-        const token = jwt.sign({ id: userDoc.id}, process.env.JWT_SECRET);
+        const token = jwt.sign({ id: userDoc.id }, process.env.JWT_SECRET, {expiresIn: '5h'});
         res
             .cookie('token', token, {httpOnly: true, sameSite: 'none', secure: true})
             .status(200)
-            .json({message: "login successful", token: token})
+            .json({
+                message: "login successful", 
+                userInfo: {
+                    id: userDoc._id,
+                    name: userDoc.name,
+                    email: userDoc.email,
+                    phone: userDoc.phone,
+                    username: userDoc.username,
+                }})
     } catch (e) {
 
     }
     res.end()
 }
 
-module.exports = {signupUser, loginUser}
+const getProfileInfoByCookie = async (req, res) => {
+    const {token} = req.cookies;
+    if(!token) {
+        res.status(401).end();
+        return;
+    }
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const userDoc = await Users.findOne({_id: decoded.id});
+        res.status(200).json({
+            userInfo: {
+                id: userDoc._id,
+                name: userDoc.name,
+                email: userDoc.email,
+                phone: userDoc.phone,
+                username: userDoc.username,
+            }
+        })
+    } catch (err) {
+        res.status(401).end();
+    }
+}
+
+const logout = (req, res) => {
+    res.clearCookie('token').status(200).json({message: "Logged our successfully!"})
+}
+
+module.exports = {signupUser, loginUser, getProfileInfoByCookie, logout}
