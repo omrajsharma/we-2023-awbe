@@ -5,11 +5,12 @@ const cors = require('cors')
 const cookieParser = require('cookie-parser')
 const {log} = require('./utility/AppUtils')
 const authRoutes = require('./routes/AuthRoutes')
+const propertyRoutes = require('./routes/PropertyRoutes')
 
 /**
  * APPLICATION CONFIG
  */
-const port = 8080;
+const port = 3000;
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
@@ -29,6 +30,7 @@ mongoose.connection.once('error', (er) => log('DATABASE ERROR: ', er))
  * ROUTE CONFIG
  */
 app.use('/api/v1/auth', authRoutes)
+app.use('/api/v1/property', propertyRoutes)
 
 
 app.listen(port, () => log(`APP STARTED ON PORT ${port}`))
