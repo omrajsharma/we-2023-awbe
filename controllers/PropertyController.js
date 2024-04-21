@@ -56,4 +56,24 @@ const listProperty = async (req, res) => {
     }
 }
 
-module.exports = {listProperty}
+const getItems = async (req, res) => {
+    const pageNo = req.query.page;
+    const type = req.query.type;
+    const input = req.query.input;
+    const filter = {};
+    if (type) {
+        filter.listType = type;
+    }
+    if (input) {
+        filter.title = { $regex: "^" + input, $options: "i"}
+    }
+    const pageSize = 2;
+    const skips = (pageNo - 1) * pageSize;
+    const responseList = await Properties.find(filter).sort({_id: -1}).skip(skips).limit(pageSize);
+
+    res.status(200).json({
+        data: responseList
+    })
+}
+
+module.exports = {listProperty, getItems}
