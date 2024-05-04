@@ -67,7 +67,7 @@ const getItems = async (req, res) => {
     if (input) {
         filter.title = { $regex: "^" + input, $options: "i"}
     }
-    const pageSize = 2;
+    const pageSize = 10;
     const skips = (pageNo - 1) * pageSize;
     const responseList = await Properties.find(filter).sort({_id: -1}).skip(skips).limit(pageSize);
 
@@ -76,4 +76,19 @@ const getItems = async (req, res) => {
     })
 }
 
-module.exports = {listProperty, getItems}
+const getItemDetails = async (req, res) => {
+    const {itemId} = req.params;
+    if (itemId == null || itemId == undefined || itemId.length == 0) {
+        res.status(400).json({error: "invalid item id"})
+    }
+
+    try {
+        const propertyDoc = await Properties.findById(itemId).populate('author', ['name']);
+        res.status(200).json({data: propertyDoc})
+    } catch (err) {
+        res.status(400).json({error: 'Bad request'})
+    }
+    res.end();
+}
+
+module.exports = {listProperty, getItems, getItemDetails}
