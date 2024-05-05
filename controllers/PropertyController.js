@@ -1,5 +1,8 @@
 const jwt = require('jsonwebtoken')
+const Users = require('../models/UserModel')
 const Properties = require('../models/PropertyModel')
+const EnquiryEmail = require('../models/EnquiryEmailModel')
+const {sendMail, getBuyerEnquiryEmailBody} = require('../utility/EmailUtils')
 
 const listProperty = async (req, res) => {
     const token = req.cookies.token
@@ -91,4 +94,82 @@ const getItemDetails = async (req, res) => {
     res.end();
 }
 
-module.exports = {listProperty, getItems, getItemDetails}
+const sendLead = async (req, res) => {
+    const token = req.cookies.token;
+    const {itemId} = req.body;
+
+    if(!token) {
+        res.status(400).json({error: "Invalid user"})
+        return
+    }
+    if(!itemId) {
+        res.status(400).json({error: "Invalid itemId"})
+        return
+    }
+
+    try {
+        const tokenInfo = jwt.verify(token, process.env.JWT_SECRET);
+        const senderUserDoc = await Users.findById(tokenInfo.id);
+        const propertyDoc = await Properties.findById(itemId)
+        const receiverUserDoc = await Users.findById(propertyDoc.author.toString())
+
+        if (senderUserDoc._id.toString() == receiverUserDoc._id.toString()) {
+            res.status(400).json({error: "Can't generate lead for yourself"})
+            return
+        }
+
+        const equiryDoc = await EnquiryEmail.findOne({
+            propertyId: itemId,
+            senderId: senderUserDoc._id,
+            receiverId: receiverUserDoc._id
+        })
+
+        // if (equiryDoc) {
+        //     res.status(400).json({error: "Already lead generated"})
+        //     return
+        // }
+
+        // email send
+        sendMail(
+            receiverUserDoc.email,
+            "Awaas Vishwa - An interested lead for your property ",
+            getBuyerEnquiryEmailBody(receiverUserDoc.name, itemId, senderUserDoc.name, senderUserDoc.email, senderUserDoc.phone)
+        )
+
+        const equiryDocNew = await EnquiryEmail.create({
+            propertyId: itemId,
+            senderId: senderUserDoc._id,
+            receiverId: receiverUserDoc._id
+        })
+        res.status(201).json({success: "Lead send to the owner"})
+    } catch(err) {
+        console.log(err);
+        res.status(500).json({error: "Something went wrong"})
+    }
+
+    res.end()
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+module.exports = {listProperty, getItems, getItemDetails, sendLead}

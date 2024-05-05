@@ -52,10 +52,8 @@ const signupUser = async (req, res) => {
         const user = await Users.create({name, phone, email, username, password: bcrypt.hashSync(password, salt)})
         res.status(201).json(user)
     } catch (err) {
-
+        res.status(500).json({error: 'Internal server error'})
     }
-
-    res.end('signup done by om')
 }
 
 const loginUser = async(req, res) => {
