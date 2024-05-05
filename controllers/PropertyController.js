@@ -124,10 +124,10 @@ const sendLead = async (req, res) => {
             receiverId: receiverUserDoc._id
         })
 
-        // if (equiryDoc) {
-        //     res.status(400).json({error: "Already lead generated"})
-        //     return
-        // }
+        if (equiryDoc) {
+            res.status(400).json({error: "Already lead generated"})
+            return
+        }
 
         // email send
         sendMail(
